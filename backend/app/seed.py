@@ -9,32 +9,62 @@ from app.security import hash_password
 from app.config import settings
 
 
+def _ensure_user(session: Session, username: str, full_name: str, password: str, role: str):
+    """
+    Crea el usuario si no existe. Si ya existe, fuerza:
+    - la contraseña con el valor que viene por parámetro
+    - el rol
+    - que esté activo
+    Así el estado de los usuarios base es predecible en cada redeploy.
+    """
+    user = session.exec(select(User).where(User.username == username)).first()
+    if not user:
+        user = User(
+            username=username,
+            full_name=full_name,
+            password_hash=hash_password(password),
+            role=role,
+            active=True,
+        )
+        session.add(user)
+    else:
+        user.full_name = full_name
+        user.password_hash = hash_password(password)
+        user.role = role
+        user.active = True
+        session.add(user)
+
+
 def seed():
     with Session(engine) as session:
-        # Usuarios
-        if not session.exec(select(User).where(User.username == settings.ADMIN_USER)).first():
-            session.add(User(
-                username=settings.ADMIN_USER,
-                full_name="System Admin",
-                password_hash=hash_password(settings.ADMIN_PASSWORD),
-                role="sysadmin",
-            ))
-        if not session.exec(select(User).where(User.username == "gerente")).first():
-            session.add(User(
-                username="gerente",
-                full_name="Gerente Demo",
-                password_hash=hash_password("gerente123"),
-                role="gerente",
-            ))
-        if not session.exec(select(User).where(User.username == "vendedor")).first():
-            session.add(User(
-                username="vendedor",
-                full_name="Vendedor Demo",
-                password_hash=hash_password("vendedor123"),
-                role="vendedor",
-            ))
+        # -----------------------------
+        # Usuarios base (contraseñas forzadas en cada arranque)
+        # -----------------------------
+        _ensure_user(
+            session,
+            username=settings.ADMIN_USER,
+            full_name="System Admin",
+            password=settings.ADMIN_PASSWORD,
+            role="sysadmin",
+        )
+        _ensure_user(
+            session,
+            username="gerente",
+            full_name="Gerente Demo",
+            password="gerente123",
+            role="gerente",
+        )
+        _ensure_user(
+            session,
+            username="vendedor",
+            full_name="Vendedor Demo",
+            password="vendedor123",
+            role="vendedor",
+        )
 
+        # -----------------------------
         # Productos demo
+        # -----------------------------
         if not session.exec(select(Product)).first():
             demo = [
                 ("Hamburguesa Clásica", 5.50, "comida"),
@@ -47,9 +77,17 @@ def seed():
                 ("Postre del día", 3.50, "postre"),
             ]
             for name, price, cat in demo:
-                session.add(Product(name=name, price=price, category=cat, stock=100, track_stock=False))
+                session.add(Product(
+                    name=name,
+                    price=price,
+                    category=cat,
+                    stock=100,
+                    track_stock=False,
+                ))
 
-        # Features
+        # -----------------------------
+        # Features (todas apagadas por defecto excepto las básicas)
+        # -----------------------------
         default_features = [
             ("inventory_enabled", False, "Módulo de inventario y stock"),
             ("inventory_alerts_enabled", False, "Alertas de stock bajo"),
@@ -64,7 +102,9 @@ def seed():
             if not session.exec(select(Feature).where(Feature.name == name)).first():
                 session.add(Feature(name=name, enabled=enabled, description=desc))
 
-        # Settings
+        # -----------------------------
+        # Settings por defecto
+        # -----------------------------
         if not session.exec(select(Setting).where(Setting.key == "printer_mode")).first():
             session.add(Setting(
                 key="printer_mode",
@@ -84,7 +124,9 @@ def seed():
                 description="Nombre que aparece en el ticket.",
             ))
 
+        # -----------------------------
         # Branding inicial
+        # -----------------------------
         if not session.exec(select(Branding)).first():
             session.add(Branding(
                 system_name="Restaurant POS",
