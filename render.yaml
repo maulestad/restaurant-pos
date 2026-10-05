@@ -28,4 +28,4 @@ services:
     plan: free
     envVars:
       - key: BACKEND_URL
-        value: https://restaurant-pos-backend.onrender.com
+        value: https://restaurant-pos-backend-o1nn.onrender.com
