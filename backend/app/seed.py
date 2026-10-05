@@ -1,3 +1,4 @@
+import os
 from sqlmodel import Session, select
 from app.database import engine
 from app.models.user import User
@@ -8,26 +9,22 @@ from app.models.branding import Branding
 from app.security import hash_password
 from app.config import settings
 
+# En demo: true → cada redeploy resetea las contraseñas base.
+# En producción: false → no sobrescribe contraseñas que el admin ya cambió.
+RESET_BASE_PASSWORDS = os.getenv("RESET_BASE_PASSWORDS", "true").lower() == "true"
+
 
 def _ensure_user(session: Session, username: str, full_name: str, password: str, role: str):
-    """
-    Crea el usuario si no existe. Si ya existe, fuerza:
-    - la contraseña con el valor que viene por parámetro
-    - el rol
-    - que esté activo
-    Así el estado de los usuarios base es predecible en cada redeploy.
-    """
     user = session.exec(select(User).where(User.username == username)).first()
     if not user:
-        user = User(
+        session.add(User(
             username=username,
             full_name=full_name,
             password_hash=hash_password(password),
             role=role,
             active=True,
-        )
-        session.add(user)
-    else:
+        ))
+    elif RESET_BASE_PASSWORDS:
         user.full_name = full_name
         user.password_hash = hash_password(password)
         user.role = role
@@ -37,9 +34,7 @@ def _ensure_user(session: Session, username: str, full_name: str, password: str,
 
 def seed():
     with Session(engine) as session:
-        # -----------------------------
-        # Usuarios base (contraseñas forzadas en cada arranque)
-        # -----------------------------
+        # Usuarios base
         _ensure_user(
             session,
             username=settings.ADMIN_USER,
@@ -47,24 +42,10 @@ def seed():
             password=settings.ADMIN_PASSWORD,
             role="sysadmin",
         )
-        _ensure_user(
-            session,
-            username="gerente",
-            full_name="Gerente Demo",
-            password="gerente123",
-            role="gerente",
-        )
-        _ensure_user(
-            session,
-            username="vendedor",
-            full_name="Vendedor Demo",
-            password="vendedor123",
-            role="vendedor",
-        )
+        _ensure_user(session, "gerente", "Gerente Demo", "gerente123", "gerente")
+        _ensure_user(session, "vendedor", "Vendedor Demo", "vendedor123", "vendedor")
 
-        # -----------------------------
         # Productos demo
-        # -----------------------------
         if not session.exec(select(Product)).first():
             demo = [
                 ("Hamburguesa Clásica", 5.50, "comida"),
@@ -78,16 +59,11 @@ def seed():
             ]
             for name, price, cat in demo:
                 session.add(Product(
-                    name=name,
-                    price=price,
-                    category=cat,
-                    stock=100,
-                    track_stock=False,
+                    name=name, price=price, category=cat,
+                    stock=100, track_stock=False,
                 ))
 
-        # -----------------------------
-        # Features (todas apagadas por defecto excepto las básicas)
-        # -----------------------------
+        # Features
         default_features = [
             ("inventory_enabled", False, "Módulo de inventario y stock"),
             ("inventory_alerts_enabled", False, "Alertas de stock bajo"),
@@ -102,31 +78,24 @@ def seed():
             if not session.exec(select(Feature).where(Feature.name == name)).first():
                 session.add(Feature(name=name, enabled=enabled, description=desc))
 
-        # -----------------------------
-        # Settings por defecto
-        # -----------------------------
+        # Settings
         if not session.exec(select(Setting).where(Setting.key == "printer_mode")).first():
             session.add(Setting(
-                key="printer_mode",
-                value="pdf",
+                key="printer_mode", value="pdf",
                 description="Modo de impresión: 'pdf' o 'escpos_direct'.",
             ))
         if not session.exec(select(Setting).where(Setting.key == "print_agent_url")).first():
             session.add(Setting(
-                key="print_agent_url",
-                value="http://localhost:5000",
+                key="print_agent_url", value="http://localhost:5000",
                 description="URL del Print Agent local.",
             ))
         if not session.exec(select(Setting).where(Setting.key == "restaurant_name")).first():
             session.add(Setting(
-                key="restaurant_name",
-                value="Restaurante Demo",
+                key="restaurant_name", value="Restaurante Demo",
                 description="Nombre que aparece en el ticket.",
             ))
 
-        # -----------------------------
         # Branding inicial
-        # -----------------------------
         if not session.exec(select(Branding)).first():
             session.add(Branding(
                 system_name="Restaurant POS",
