@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sysadmin — Panel</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand" id="sidebar-brand">⚙️ Sysadmin</div>
+      <nav>
+        <a href="#" class="nav-item active" data-view="features">🧩 Módulos</a>
+        <a href="#" class="nav-item" data-view="printing">🖨️ Impresión</a>
+        <a href="#" class="nav-item" data-view="users">👥 Usuarios</a>
+        <a href="#" class="nav-item" data-view="branding">🎨 Branding</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div id="user-info"></div>
+        <button onclick="logout()">Salir</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <section id="view-features" class="view">
+        <h1>Módulos del sistema</h1>
+        <div id="features" class="feature-list"></div>
+      </section>
+
+      <section id="view-printing" class="view hidden">
+        <h1>Impresión</h1>
+        <div id="printing-settings"></div>
+      </section>
+
+      <section id="view-users" class="view hidden">
+        <h1>Usuarios</h1>
+        <div class="toolbar">
+          <button class="btn-primary" onclick="openUserModal()">+ Nuevo usuario</button>
+        </div>
+        <table class="cart-table">
+          <thead>
+            <tr><th>ID</th><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Activo</th><th></th></tr>
+          </thead>
+          <tbody id="users-body"></tbody>
+        </table>
+      </section>
+
+      <section id="view-branding" class="view hidden">
+        <h1>Branding</h1>
+        <div class="cash-box">
+          <label>Nombre del sistema
+            <input type="text" id="brand-name" />
+          </label>
+          <label>Color principal
+            <input type="color" id="brand-color" />
+          </label>
+          <label>Logo (PNG/JPG, máx 200KB)
+            <input type="file" id="brand-logo-file" accept="image/*" />
+          </label>
+          <div id="brand-preview" style="margin-top:12px"></div>
+          <button class="btn-primary" onclick="saveBranding()">Guardar</button>
+          <p id="brand-msg" style="color:#16a34a"></p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="user-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2 id="user-modal-title">Nuevo usuario</h2>
+      <form onsubmit="saveUser(event)">
+        <input type="hidden" id="u-id" />
+        <label>Usuario<input type="text" id="u-username" required /></label>
+        <label>Nombre completo<input type="text" id="u-fullname" required /></label>
+        <label>Contraseña <small id="u-pwd-hint">(obligatoria al crear)</small>
+          <input type="password" id="u-password" />
+        </label>
+        <label>Rol
+          <select id="u-role">
+            <option value="vendedor">Vendedor</option>
+            <option value="gerente">Gerente</option>
+            <option value="sysadmin">Sysadmin</option>
+          </select>
+        </label>
+        <label><input type="checkbox" id="u-active" checked /> Activo</label>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeUserModal()">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/admin.js"></script>
+</body>
+</html>

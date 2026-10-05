@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Restaurant POS — Login</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="login-body">
+  <div class="login-card">
+    <h1>🍽️ Restaurant POS</h1>
+    <p class="subtitle">Ingresa tus credenciales</p>
+    <form id="login-form">
+      <input type="text" id="username" placeholder="Usuario" required />
+      <input type="password" id="password" placeholder="Contraseña" required />
+      <button type="submit">Entrar</button>
+    </form>
+    <p id="error" class="error"></p>
+    <div class="hint">
+      <small>Demo: sysadmin/admin123 · gerente/gerente123 · vendedor/vendedor123</small>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const body = new URLSearchParams({ username, password });
+
+      const res = await fetch('/api/auth/login', { method: 'POST', body });
+      if (!res.ok) {
+        document.getElementById('error').textContent = 'Credenciales inválidas';
+        return;
+      }
+      const data = await res.json();
+      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('role', data.role);
+      localStorage.setItem('username', data.username);
+
+      if (data.role === 'sysadmin') location.href = '/admin.html';
+      else if (data.role === 'gerente') location.href = '/dashboard.html';
+      else location.href = '/pos.html';
+    });
+  </script>
+</body>
+</html>

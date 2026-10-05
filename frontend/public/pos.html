@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>POS — Ventas</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand" id="sidebar-brand">🍽️ POS</div>
+      <nav>
+        <a href="#" class="nav-item active" data-view="sale">🛒 Vender</a>
+        <a href="#" class="nav-item" data-view="orders">📋 Mis pedidos</a>
+        <a href="#" class="nav-item" data-view="cash">💰 Mi caja</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div id="user-info"></div>
+        <button onclick="logout()">Salir</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <section id="view-sale" class="view">
+        <div class="pos-layout">
+          <div class="products-panel">
+            <h2>Productos</h2>
+            <div id="products" class="product-grid"></div>
+          </div>
+          <div class="cart-panel">
+            <h2>Pedido actual</h2>
+            <table class="cart-table">
+              <thead><tr><th>Producto</th><th>Cant</th><th>Subtotal</th><th></th></tr></thead>
+              <tbody id="cart-body"></tbody>
+            </table>
+            <div class="total">TOTAL: $<span id="total">0.00</span></div>
+            <div class="actions">
+              <input type="number" id="table_number" placeholder="Mesa #" min="1" />
+              <button class="primary" onclick="confirmSale()">Cobrar</button>
+            </div>
+            <p id="msg"></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-orders" class="view hidden">
+        <h1>Mis pedidos</h1>
+        <table class="cart-table">
+          <thead>
+            <tr><th>ID</th><th>Mesa</th><th>Total</th><th>Estado</th><th>Fecha</th><th>Ticket</th></tr>
+          </thead>
+          <tbody id="orders-body"></tbody>
+        </table>
+      </section>
+
+      <section id="view-cash" class="view hidden">
+        <h1>Mi caja</h1>
+        <div id="cash-panel"></div>
+
+        <h2 style="margin-top:24px">Historial</h2>
+        <table class="cart-table">
+          <thead>
+            <tr><th>ID</th><th>Apertura</th><th>Cierre</th><th>Apertura $</th><th>Esperado</th><th>Contado</th><th>Diferencia</th><th>Estado</th></tr>
+          </thead>
+          <tbody id="cash-history-body"></tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
